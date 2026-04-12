@@ -86,13 +86,11 @@ client:
 1. Start MongoDB (if running locally)
 2. Start the server:
    ```bash
-   cd server
-   npm run dev
+   npm run dev:server
    ```
 3. Start the client:
    ```bash
-   cd client
-   npm run dev
+   npm run dev:client
    ```
 
 ## Team Invitations
