@@ -45,7 +45,7 @@ server:
   jwt_expire: 7d
   jwt_refresh_secret: your-super-secret-refresh-token-key-change-this-in-production
   jwt_refresh_expire: 30d
-  frontend_url: http://localhost:5173
+  frontend_url: http://localhost:3000
   email_service: gmail
   email_user: your-email@gmail.com
   email_password: your-app-password-here
