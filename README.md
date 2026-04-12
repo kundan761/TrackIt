@@ -38,35 +38,27 @@ A comprehensive project management application built with MERN stack.
 
 Create a `.env` file in the `server` directory:
 
-```env
-# Server Configuration
-PORT=5000
-NODE_ENV=development
+```
+server:
+  port: 5500
+  node_env: development
+  mongodb_uri: mongodb://localhost:27017/project-management
+  jwt_secret: your-super-secret-jwt-key-change-this-in-production
+  jwt_expire: 7d
+  jwt_refresh_secret: your-super-secret-refresh-token-key-change-this-in-production
+  jwt_refresh_expire: 30d
+  frontend_url: http://localhost:5173
+  email_service: gmail
+  email_user: your-email@gmail.com
+  email_password: your-app-password-here
+  email_from_name: TrackIt
+  cloudinary_cloud_name: your-cloud-name
+  cloudinary_api_key: your-api-key
+  cloudinary_api_secret: your-api-secret
 
-# MongoDB Configuration
-MONGODB_URI=mongodb://localhost:27017/project-management
+client:
+  vite_api_url: http://localhost:5500/api
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=7d
-JWT_REFRESH_SECRET=your-super-secret-refresh-token-key-change-this-in-production
-JWT_REFRESH_EXPIRE=30d
-
-# Frontend URL (for email links)
-FRONTEND_URL=http://localhost:5173
-
-# Email Configuration
-# For Gmail: Use App Password (not regular password)
-# Go to Google Account > Security > 2-Step Verification > App Passwords
-EMAIL_SERVICE=gmail
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password-here
-EMAIL_FROM_NAME=TrackIt
-
-# Alternative SMTP Configuration (if not using Gmail)
-# SMTP_HOST=smtp.gmail.com
-# SMTP_PORT=587
-# SMTP_SECURE=false
 ```
 
 ### Client (.env)
@@ -107,14 +99,9 @@ EMAIL_PASSWORD=your-password
    ```bash
    # Root
    npm install
-   
-   # Server
-   cd server
-   npm install
-   
-   # Client
-   cd ../client
-   npm install
+
+   # Run Client and Server
+   npm run dev
    ```
 
 ## Running the Application
