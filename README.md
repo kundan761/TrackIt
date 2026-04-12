@@ -34,9 +34,7 @@ A comprehensive project management application built with MERN stack.
 
 ## Environment Variables
 
-### Server (.env)
-
-Create a `.env` file in the `server` directory:
+Create a `env.yaml` file in the root directory:
 
 ```
 server:
@@ -61,14 +59,6 @@ client:
 
 ```
 
-### Client (.env)
-
-Create a `.env` file in the `client` directory:
-
-```env
-VITE_API_URL=http://localhost:5000/api
-```
-
 ## Email Setup
 
 ### Gmail Setup (Recommended)
@@ -77,20 +67,7 @@ VITE_API_URL=http://localhost:5000/api
 2. Enable 2-Step Verification
 3. Go to Security > 2-Step Verification > App Passwords
 4. Generate an App Password for "Mail"
-5. Use this App Password as `EMAIL_PASSWORD` in your `.env` file
-
-### Other Email Providers
-
-For other email providers (Outlook, Yahoo, etc.), use SMTP configuration:
-
-```env
-EMAIL_SERVICE=smtp
-SMTP_HOST=smtp.your-provider.com
-SMTP_PORT=587
-SMTP_SECURE=false
-EMAIL_USER=your-email@provider.com
-EMAIL_PASSWORD=your-password
-```
+5. Use this App Password as `EMAIL_PASSWORD` in your `env.yaml` file
 
 ## Installation
 
