@@ -7,6 +7,7 @@ export interface ITeamInvitation extends Document {
   token: string;
   expiresAt: Date;
   role?: 'admin' | 'manager' | 'member' | 'viewer';
+  projectId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,11 @@ const teamInvitationSchema = new Schema<ITeamInvitation>(
       type: String,
       enum: ['admin', 'manager', 'member', 'viewer'],
       default: 'member',
+    },
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Project',
+      default: null,
     },
   },
   {

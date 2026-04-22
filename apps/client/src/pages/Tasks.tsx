@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
 import { fetchTasks, createTask, updateTask, deleteTask } from '../store/slices/taskSlice';
 import { fetchProjects } from '../store/slices/projectSlice';
+import { projectsApi } from '../api/projects';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -10,21 +11,37 @@ import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Select from '../components/ui/Select';
-import { Plus, Search, Columns, List, Calendar, Clock, User, Trash2, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+import toast from 'react-hot-toast';
+import { Plus, Search, Columns, List, Calendar, Clock, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, isToday, isPast, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 
 const Tasks = () => {
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
   const { tasks, loading } = useAppSelector((state) => state.task);
   const { projects } = useAppSelector((state) => state.project);
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'kanban' | 'list' | 'calendar'>('kanban');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
+
+  const searchQuery = searchParams.get('search') || '';
+  const statusFilter = searchParams.get('status') || 'all';
+  const projectFilter = searchParams.get('project') || 'all';
+
+  const updateSearchParam = (key: string, value: string) => {
+    setSearchParams((prev) => {
+      if (value && value !== 'all') {
+        prev.set(key, value);
+      } else {
+        prev.delete(key);
+      }
+      return prev;
+    }, { replace: true });
+  };
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState<{isOpen: boolean, taskId: string | null}>({isOpen: false, taskId: null});
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -33,7 +50,10 @@ const Tasks = () => {
     status: 'todo' as const,
     priority: 'medium' as const,
     dueDate: '',
+    assignees: [] as string[],
   });
+  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -55,41 +75,115 @@ const Tasks = () => {
     }
   }, [searchParams, tasks]);
 
+  const loadProjectMembers = useCallback(async (projectId: string) => {
+    if (!projectId) {
+      setProjectMembers([]);
+      return;
+    }
+    setMembersLoading(true);
+    try {
+      const response = await projectsApi.getById(projectId);
+      const project = response.data;
+      if (!project) { setProjectMembers([]); return; }
+
+      const memberMap = new Map<string, any>();
+      if (project.createdBy && typeof project.createdBy === 'object') {
+        const creator = project.createdBy as any;
+        memberMap.set(creator._id, creator);
+      }
+      (project.teamMembers as any[]).forEach((m: any) => {
+        if (m && typeof m === 'object') memberMap.set(m._id, m);
+      });
+      setProjectMembers(Array.from(memberMap.values()));
+    } catch (err) {
+      console.error('Failed to load project members:', err);
+      setProjectMembers([]);
+    } finally {
+      setMembersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProjectMembers(taskForm.projectId);
+  }, [taskForm.projectId, loadProjectMembers]);
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    await dispatch(createTask({
-      ...taskForm,
-      dueDate: taskForm.dueDate ? new Date(taskForm.dueDate) : undefined,
-    }));
-    setIsCreateModalOpen(false);
-    setTaskForm({
-      title: '',
-      description: '',
-      projectId: '',
-      status: 'todo',
-      priority: 'medium',
-      dueDate: '',
-    });
+    if (taskForm.assignees.length === 0) {
+      toast.error('Please select an assignee.');
+      return;
+    }
+    try {
+      await dispatch(createTask({
+        ...taskForm,
+        dueDate: taskForm.dueDate ? new Date(taskForm.dueDate) : undefined,
+      })).unwrap();
+      toast.success('Task created successfully');
+      setIsCreateModalOpen(false);
+      setTaskForm({
+        title: '',
+        description: '',
+        projectId: '',
+        status: 'todo',
+        priority: 'medium',
+        dueDate: '',
+        assignees: user ? [user._id] : [],
+      });
+    } catch (err: any) {
+      toast.error(err || 'Failed to create task');
+    }
   };
 
   const handleUpdateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (taskForm.assignees.length === 0) {
+      toast.error('Please select an assignee.');
+      return;
+    }
     if (selectedTask) {
-      await dispatch(updateTask({
-        id: selectedTask._id,
-        data: {
-          ...taskForm,
-          dueDate: taskForm.dueDate ? new Date(taskForm.dueDate) : undefined,
-        },
-      }));
-      setIsTaskModalOpen(false);
-      setSelectedTask(null);
+      try {
+        await dispatch(updateTask({
+          id: selectedTask._id,
+          data: {
+            ...taskForm,
+            dueDate: taskForm.dueDate ? new Date(taskForm.dueDate) : undefined,
+          },
+        })).unwrap();
+        toast.success('Task updated successfully');
+        setIsTaskModalOpen(false);
+        setSelectedTask(null);
+        setTaskForm({
+          title: '',
+          description: '',
+          projectId: '',
+          status: 'todo',
+          priority: 'medium',
+          dueDate: '',
+          assignees: user ? [user._id] : [],
+        });
+      } catch (err: any) {
+        toast.error(err || 'Failed to update task');
+      }
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      await dispatch(deleteTask(id));
+  const handleDelete = (id: string) => {
+    setDeleteModalState({ isOpen: true, taskId: id });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteModalState.taskId) {
+      try {
+        await dispatch(deleteTask(deleteModalState.taskId)).unwrap();
+        toast.success('Task deleted successfully');
+        setDeleteModalState({ isOpen: false, taskId: null });
+        if (selectedTask?._id === deleteModalState.taskId) {
+          setIsTaskModalOpen(false);
+          setSelectedTask(null);
+        }
+      } catch (err: any) {
+        toast.error(err || 'Failed to delete task');
+      }
     }
   };
 
@@ -102,6 +196,9 @@ const Tasks = () => {
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : '',
+      assignees: (task.assignees || []).map((a: any) =>
+        typeof a === 'object' ? a._id : a
+      ),
     });
     setIsTaskModalOpen(true);
   };
@@ -136,7 +233,10 @@ const Tasks = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">Manage and track all your tasks</p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
+        <Button onClick={() => {
+          setTaskForm(prev => ({ ...prev, assignees: user ? [user._id] : [] }));
+          setIsCreateModalOpen(true);
+        }} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           New Task
         </Button>
@@ -150,32 +250,34 @@ const Tasks = () => {
             <Input
               placeholder="Search tasks..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => updateSearchParam('search', e.target.value)}
               className="pl-10"
             />
           </div>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Status' },
-              { value: 'todo', label: 'To Do' },
-              { value: 'in_progress', label: 'In Progress' },
-              { value: 'in_review', label: 'In Review' },
-              { value: 'done', label: 'Done' },
-              { value: 'blocked', label: 'Blocked' },
-            ]}
-            className="w-48"
-          />
-          <Select
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Projects' },
-              ...projects.map((p) => ({ value: p._id, label: p.name })),
-            ]}
-            className="w-48"
-          />
+          <div className="w-full sm:w-48">
+            <Select
+              value={statusFilter}
+              onChange={(e) => updateSearchParam('status', e.target.value)}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'todo', label: 'To Do' },
+                { value: 'in_progress', label: 'In Progress' },
+                { value: 'in_review', label: 'In Review' },
+                { value: 'done', label: 'Done' },
+                { value: 'blocked', label: 'Blocked' },
+              ]}
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <Select
+              value={projectFilter}
+              onChange={(e) => updateSearchParam('project', e.target.value)}
+              options={[
+                { value: 'all', label: 'All Projects' },
+                ...projects.map((p) => ({ value: p._id, label: p.name })),
+              ]}
+            />
+          </div>
           <div className="flex items-center space-x-2 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-700">
             <button
               onClick={() => setViewMode('kanban')}
@@ -424,7 +526,6 @@ const Tasks = () => {
         </Card>
       )}
 
-      {/* Create Task Modal */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -449,12 +550,46 @@ const Tasks = () => {
           <Select
             label="Project"
             value={taskForm.projectId}
-            onChange={(e) => setTaskForm({ ...taskForm, projectId: e.target.value })}
+            onChange={(e) => setTaskForm({ ...taskForm, projectId: e.target.value, assignees: user ? [user._id] : [] })}
             options={[
               { value: '', label: 'Select Project' },
               ...projects.map((p) => ({ value: p._id, label: p.name })),
             ]}
           />
+          {/* Assignees — fetched fresh from server when project is selected */}
+          {taskForm.projectId ? (
+            <div>
+              {membersLoading ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign to</label>
+                  <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg">
+                    <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                    Loading members...
+                  </div>
+                </div>
+              ) : projectMembers.length === 0 ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign to</label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    No members in this project yet. Invite team members first.
+                  </p>
+                </div>
+              ) : (
+                <Select
+                  label="Assign to"
+                  options={[
+                    { value: '', label: 'Select Assignee' },
+                    ...projectMembers.map((m: any) => ({
+                      value: m._id,
+                      label: `${m.name}`
+                    }))
+                  ]}
+                  value={taskForm.assignees[0] || ''}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, assignees: e.target.value ? [e.target.value] : [] }))}
+                />
+              )}
+            </div>
+          ) : null}
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Status"
@@ -526,12 +661,46 @@ const Tasks = () => {
             <Select
               label="Project"
               value={taskForm.projectId}
-              onChange={(e) => setTaskForm({ ...taskForm, projectId: e.target.value })}
+              onChange={(e) => setTaskForm({ ...taskForm, projectId: e.target.value, assignees: user ? [user._id] : [] })}
               options={[
                 { value: '', label: 'Select Project' },
                 ...projects.map((p) => ({ value: p._id, label: p.name })),
               ]}
             />
+            {/* Assignees — fetched fresh from server when project is selected */}
+            {taskForm.projectId ? (
+              <div>
+                {membersLoading ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign to</label>
+                    <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg">
+                      <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                      Loading members...
+                    </div>
+                  </div>
+                ) : projectMembers.length === 0 ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign to</label>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      No members in this project yet. Invite team members first.
+                    </p>
+                  </div>
+                ) : (
+                  <Select
+                    label="Assign to"
+                    options={[
+                      { value: '', label: 'Select Assignee' },
+                      ...projectMembers.map((m: any) => ({
+                        value: m._id,
+                        label: `${m.name}`
+                      }))
+                    ]}
+                    value={taskForm.assignees[0] || ''}
+                    onChange={(e) => setTaskForm(prev => ({ ...prev, assignees: e.target.value ? [e.target.value] : [] }))}
+                  />
+                )}
+              </div>
+            ) : null}
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label="Status"
@@ -594,6 +763,13 @@ const Tasks = () => {
           </form>
         )}
       </Modal>
+
+      <ConfirmDeleteModal
+        isOpen={deleteModalState.isOpen}
+        onClose={() => setDeleteModalState({ isOpen: false, taskId: null })}
+        onConfirm={handleDeleteConfirm}
+        itemName="this task"
+      />
     </div>
   );
 };

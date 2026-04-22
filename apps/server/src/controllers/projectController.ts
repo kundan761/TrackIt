@@ -8,27 +8,37 @@ export const getProjects = asyncHandler(async (req: AuthRequest, res: Response, 
   const userId = req.user!._id;
   const { status, search } = req.query;
 
-  const query: any = {
+  const userScopeFilter = {
     $or: [
       { createdBy: userId },
       { teamMembers: userId },
     ],
   };
 
+  const query: any = { ...userScopeFilter };
+
   if (status) {
     query.status = status;
   }
 
   if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } },
+    // Use $and to preserve user-scoping alongside the search filter
+    query.$and = [
+      userScopeFilter,
+      {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+        ],
+      },
     ];
+    // Remove the top-level $or since it's now inside $and
+    delete query.$or;
   }
 
   const projects = await Project.find(query)
-    .populate('createdBy', 'name email avatar')
-    .populate('teamMembers', 'name email avatar')
+    .populate('createdBy', 'name email avatar role')
+    .populate('teamMembers', 'name email avatar role')
     .sort({ createdAt: -1 });
 
   res.status(200).json({
@@ -39,16 +49,18 @@ export const getProjects = asyncHandler(async (req: AuthRequest, res: Response, 
 
 export const getProject = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const project = await Project.findById(req.params.id)
-    .populate('createdBy', 'name email avatar')
-    .populate('teamMembers', 'name email avatar');
+    .populate('createdBy', 'name email avatar role')
+    .populate('teamMembers', 'name email avatar role');
 
   if (!project) {
     return next(new AppError('Project not found', 404));
   }
 
   const userId = req.user!._id;
+  const creatorId = (project.createdBy as any)._id ? (project.createdBy as any)._id.toString() : project.createdBy.toString();
+  
   if (
-    project.createdBy.toString() !== userId.toString() &&
+    creatorId !== userId.toString() &&
     !project.teamMembers.some((member: any) => member._id.toString() === userId.toString())
   ) {
     return next(new AppError('Not authorized to access this project', 403));
@@ -67,8 +79,8 @@ export const createProject = asyncHandler(async (req: AuthRequest, res: Response
   });
 
   const populatedProject = await Project.findById(project._id)
-    .populate('createdBy', 'name email avatar')
-    .populate('teamMembers', 'name email avatar');
+    .populate('createdBy', 'name email avatar role')
+    .populate('teamMembers', 'name email avatar role');
 
   res.status(201).json({
     success: true,
@@ -92,8 +104,8 @@ export const updateProject = asyncHandler(async (req: AuthRequest, res: Response
     new: true,
     runValidators: true,
   })
-    .populate('createdBy', 'name email avatar')
-    .populate('teamMembers', 'name email avatar');
+    .populate('createdBy', 'name email avatar role')
+    .populate('teamMembers', 'name email avatar role');
 
   res.status(200).json({
     success: true,
@@ -152,8 +164,8 @@ export const addTeamMember = asyncHandler(async (req: AuthRequest, res: Response
   await project.save();
 
   const populatedProject = await Project.findById(projectId)
-    .populate('createdBy', 'name email avatar')
-    .populate('teamMembers', 'name email avatar');
+    .populate('createdBy', 'name email avatar role')
+    .populate('teamMembers', 'name email avatar role');
 
   res.status(200).json({
     success: true,
@@ -181,8 +193,8 @@ export const removeTeamMember = asyncHandler(async (req: AuthRequest, res: Respo
   await project.save();
 
   const populatedProject = await Project.findById(projectId)
-    .populate('createdBy', 'name email avatar')
-    .populate('teamMembers', 'name email avatar');
+    .populate('createdBy', 'name email avatar role')
+    .populate('teamMembers', 'name email avatar role');
 
   res.status(200).json({
     success: true,

@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import User from '../models/User.js';
 import TeamInvitation from '../models/TeamInvitation.js';
+import Project from '../models/Project.js';
 import { AppError, asyncHandler } from '../middleware/errorHandler.js';
 import { AuthRequest } from '../types/index.js';
 import { generateToken } from '../utils/generateToken.js';
@@ -10,11 +11,27 @@ import crypto from 'crypto';
 import { config } from '../config/index.js';
 
 export const inviteTeamMember = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { email, role } = req.body;
+  const { email, role, projectId } = req.body;
   const invitedBy = req.user!._id;
 
   if (!email) {
     return next(new AppError('Email is required', 400));
+  }
+
+  // Validate project if provided
+  let projectName: string | undefined;
+  if (projectId) {
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return next(new AppError('Project not found', 404));
+    }
+    // Check the inviter is the project owner or a member
+    const isOwner = project.createdBy.toString() === invitedBy.toString();
+    const isMember = project.teamMembers.some((m: any) => m.toString() === invitedBy.toString());
+    if (!isOwner && !isMember) {
+      return next(new AppError('Not authorized to invite to this project', 403));
+    }
+    projectName = project.name;
   }
 
   const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -41,6 +58,7 @@ export const inviteTeamMember = asyncHandler(async (req: AuthRequest, res: Respo
     expiresAt,
     role: role || 'member',
     status: 'pending',
+    projectId: projectId || null,
   });
 
   try {
@@ -48,10 +66,11 @@ export const inviteTeamMember = asyncHandler(async (req: AuthRequest, res: Respo
     const inviteUrl = `${frontendUrl}/invite/${token}`;
     const inviter = await User.findById(invitedBy);
     const inviterName = inviter?.name || 'Team Admin';
+    const subjectProject = projectName ? ` to the "${projectName}" project` : '';
     
     await sendEmail({
       to: email,
-      subject: `You've been invited to join ${inviterName}'s team on TrackIt`,
+      subject: `You've been invited${subjectProject} on TrackIt by ${inviterName}`,
       html: emailTemplates.teamInvitation(inviteUrl, inviterName, role || 'team_member'),
     });
   } catch (emailError) {
@@ -68,6 +87,8 @@ export const inviteTeamMember = asyncHandler(async (req: AuthRequest, res: Respo
         status: invitation.status,
         expiresAt: invitation.expiresAt,
         role: invitation.role,
+        projectId: invitation.projectId,
+        projectName,
       },
       token: config.get('server.node_env', 'development') === 'development' ? token : undefined,
     },
@@ -79,6 +100,7 @@ export const getInvitations = asyncHandler(async (req: AuthRequest, res: Respons
     invitedBy: req.user!._id,
   })
     .populate('invitedBy', 'name email')
+    .populate('projectId', 'name color')
     .sort({ createdAt: -1 });
 
   res.status(200).json({
@@ -119,6 +141,19 @@ export const acceptInvitation = asyncHandler(async (req: any, res: Response, nex
 
   invitation.status = 'accepted';
   await invitation.save();
+
+  // If invitation is linked to a project, add the new user to that project's teamMembers
+  if (invitation.projectId) {
+    try {
+      const project = await Project.findById(invitation.projectId);
+      if (project && !project.teamMembers.some((m: any) => m.toString() === user._id.toString())) {
+        project.teamMembers.push(user._id);
+        await project.save();
+      }
+    } catch (projectError) {
+      console.error('Failed to add user to project after invitation acceptance:', projectError);
+    }
+  }
 
   try {
     const inviter = await User.findById(invitation.invitedBy);

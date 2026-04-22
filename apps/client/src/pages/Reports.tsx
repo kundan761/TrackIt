@@ -233,12 +233,11 @@ const Reports = () => {
             )}
           </div>
 
-          {/* Additional Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {taskPriorityData.length > 0 ? (
               <Card title="Task Priority Distribution">
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={taskPriorityData} margin={{ top: 10, right: 30, left:0, bottom: 0 }} layout="vertical">
+                  <BarChart data={taskPriorityData} margin={{ top: 10, right: 30, left:1, bottom: 0 }} layout="vertical">
                     <defs>
                       {COLORS.map((color, index) => (
                         <linearGradient key={`colorPriority-${index}`} id={`colorPriority-${index}`} x1="0" y1="0" x2="1" y2="0">

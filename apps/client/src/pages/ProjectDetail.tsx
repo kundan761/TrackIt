@@ -1,31 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../hooks/redux';
-import { fetchProject, updateProject, addTeamMemberToProject } from '../store/slices/projectSlice';
+import { fetchProject, removeTeamMemberFromProject } from '../store/slices/projectSlice';
 import { fetchTasks, createTask } from '../store/slices/taskSlice';
+import { teamApi } from '../api/team';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
-import { Plus, Users, FileText, Calendar, Settings, ArrowLeft } from 'lucide-react';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+import toast from 'react-hot-toast';
+import { Plus, Users, FileText, Calendar, ArrowLeft, X } from 'lucide-react';
 import { format } from 'date-fns';
+import Select from '../components/ui/Select';
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const { currentProject, loading } = useAppSelector((state) => state.project);
   const { tasks } = useAppSelector((state) => state.task);
+  const { user } = useAppSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'team' | 'files' | 'timeline'>('overview');
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState<{isOpen: boolean, memberId: string | null}>({isOpen: false, memberId: null});
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [memberEmail, setMemberEmail] = useState('');
+  const [memberRole, setMemberRole] = useState<'admin' | 'manager' | 'member' | 'viewer'>('member');
+  const [isInviteLoading, setIsInviteLoading] = useState(false);
   const [taskForm, setTaskForm] = useState({
     title: '',
     description: '',
     status: 'todo' as const,
     priority: 'medium' as const,
     dueDate: '',
+    assignees: user ? [user._id] : [] as string[],
   });
 
   useEffect(() => {
@@ -38,28 +47,63 @@ const ProjectDetail = () => {
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (id) {
-      await dispatch(addTeamMemberToProject({ id, email: memberEmail }));
-      setIsAddMemberModalOpen(false);
-      setMemberEmail('');
+      setIsInviteLoading(true);
+      try {
+        await teamApi.inviteMember({
+          email: memberEmail,
+          role: memberRole,
+          projectId: id,
+        });
+        toast.success('Invitation sent successfully');
+        setIsAddMemberModalOpen(false);
+        setMemberEmail('');
+        setMemberRole('member');
+      } catch (err: any) {
+        toast.error(err.response?.data?.message || 'Failed to send invitation');
+      } finally {
+        setIsInviteLoading(false);
+      }
+    }
+  };
+
+  const handleRemoveMemberConfirm = async () => {
+    if (id && deleteModalState.memberId) {
+      try {
+        await dispatch(removeTeamMemberFromProject({ id, userId: deleteModalState.memberId })).unwrap();
+        toast.success('Team member removed successfully');
+        setDeleteModalState({ isOpen: false, memberId: null });
+      } catch (err: any) {
+        toast.error(err || 'Failed to remove team member');
+      }
     }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (taskForm.assignees.length === 0) {
+      toast.error('Please select an assignee.');
+      return;
+    }
     if (id) {
-      await dispatch(createTask({
-        ...taskForm,
-        projectId: id,
-        dueDate: taskForm.dueDate ? new Date(taskForm.dueDate) : undefined,
-      }));
-      setIsCreateTaskModalOpen(false);
-      setTaskForm({
-        title: '',
-        description: '',
-        status: 'todo',
-        priority: 'medium',
-        dueDate: '',
-      });
+      try {
+        await dispatch(createTask({
+          ...taskForm,
+          projectId: id,
+          dueDate: taskForm.dueDate ? new Date(taskForm.dueDate) : undefined,
+        })).unwrap();
+        toast.success('Task created successfully');
+        setIsCreateTaskModalOpen(false);
+        setTaskForm({
+          title: '',
+          description: '',
+          status: 'todo',
+          priority: 'medium',
+          dueDate: '',
+          assignees: user ? [user._id] : [],
+        });
+      } catch (err: any) {
+        toast.error(err || 'Failed to create task');
+      }
     }
   };
 
@@ -72,7 +116,14 @@ const ProjectDetail = () => {
   }
 
   const projectTasks = tasks.filter((task) => task.projectId === id || (typeof task.projectId === 'object' && task.projectId._id === id));
-  const teamMembers = currentProject.teamMembers || [];
+  
+  const teamMembers = currentProject.teamMembers ? [...currentProject.teamMembers] : [];
+  if (currentProject.createdBy) {
+    const creatorId = typeof currentProject.createdBy === 'object' ? (currentProject.createdBy as any)._id : currentProject.createdBy;
+    if (!teamMembers.some((m: any) => (m._id || m) === creatorId)) {
+      teamMembers.unshift(currentProject.createdBy);
+    }
+  }
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: FileText },
@@ -85,13 +136,7 @@ const ProjectDetail = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Link to="/projects">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        </Link>
+      <div className="flex items-center justify-between space-x-4">
         <div className="flex-1">
           <div className="flex items-center space-x-3">
             <div
@@ -107,6 +152,12 @@ const ProjectDetail = () => {
             <p className="text-gray-600 dark:text-gray-400 mt-2">{currentProject.description}</p>
           )}
         </div>
+        <Link to="/projects">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        </Link>
       </div>
 
       {/* Tabs */}
@@ -254,8 +305,17 @@ const ProjectDetail = () => {
                 {teamMembers.map((member: any) => (
                   <div
                     key={member._id || member}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-center"
+                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-center relative group"
                   >
+                    {typeof member === 'object' && member._id && (
+                      <button
+                        onClick={() => setDeleteModalState({ isOpen: true, memberId: member._id })}
+                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove member"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
                     <div className="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-semibold text-xl">
                       {typeof member === 'object' && member.name
                         ? member.name.charAt(0).toUpperCase()
@@ -308,15 +368,36 @@ const ProjectDetail = () => {
             required
             placeholder="Enter member's email"
           />
+          <Select
+            label="Role"
+            value={memberRole}
+            onChange={(e) => setMemberRole(e.target.value as any)}
+            options={[
+              { value: 'member', label: 'Member' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'viewer', label: 'Viewer' },
+            ]}
+          />
+          <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+            <span>
+              When accepted, this person will automatically be added to <strong>{currentProject?.name}</strong>.
+            </span>
+          </div>
           <div className="flex justify-end space-x-3 pt-4">
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setIsAddMemberModalOpen(false)}
+              onClick={() => {
+                setIsAddMemberModalOpen(false);
+                setMemberEmail('');
+                setMemberRole('member');
+              }}
+              disabled={isInviteLoading}
             >
               Cancel
             </Button>
-            <Button type="submit">Add Member</Button>
+            <Button type="submit" isLoading={isInviteLoading}>Send Invitation</Button>
           </div>
         </form>
       </Modal>
@@ -341,6 +422,18 @@ const ProjectDetail = () => {
             value={taskForm.description}
             onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
             placeholder="Enter task description"
+          />
+          <Select
+            label="Assign to"
+            options={[
+              { value: '', label: 'Select Assignee' },
+              ...teamMembers.map((m: any) => ({
+                value: m._id,
+                label: `${m.name}`
+              }))
+            ]}
+            value={taskForm.assignees[0] || ''}
+            onChange={(e) => setTaskForm(prev => ({ ...prev, assignees: e.target.value ? [e.target.value] : [] }))}
           />
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -385,6 +478,13 @@ const ProjectDetail = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDeleteModal
+        isOpen={deleteModalState.isOpen}
+        onClose={() => setDeleteModalState({ isOpen: false, memberId: null })}
+        onConfirm={handleRemoveMemberConfirm}
+        itemName="this team member from the project"
+      />
     </div>
   );
 };

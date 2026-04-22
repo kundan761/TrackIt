@@ -6,6 +6,8 @@ import Input from '../components/ui/Input';
 import Logo from '../components/Logo';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { authApi } from '../api/auth';
+import toast from 'react-hot-toast';
 
 const Auth = () => {
   const location = useLocation();
@@ -27,7 +29,11 @@ const Auth = () => {
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
 
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
+
   const handleSwitch = (toSignup: boolean) => {
+    setIsForgotPassword(false);
     navigate(toSignup ? '/signup' : '/login', { replace: true });
   };
 
@@ -36,6 +42,24 @@ const Auth = () => {
     const result = await dispatch(loginUser({ email: loginEmail, password: loginPassword }));
     if (loginUser.fulfilled.match(result)) {
       navigate('/');
+    }
+  };
+
+  const handleForgotPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    setIsForgotPasswordLoading(true);
+    try {
+      const response = await authApi.forgotPassword(loginEmail);
+      toast.success(response?.message || 'Password reset link sent to your email');
+      setIsForgotPassword(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to send reset link');
+    } finally {
+      setIsForgotPasswordLoading(false);
     }
   };
 
@@ -162,14 +186,14 @@ const Auth = () => {
               <div className="animate-fadeIn">
                 <div className="mb-8">
                   <h1 className="text-4xl md:text-5xl font-bold mb-3" style={{ color: isDark ? '#f3f4f6' : '#111827' }}>
-                    Welcome Back
+                    {isForgotPassword ? 'Reset Password' : 'Welcome Back'}
                   </h1>
                   <p className="text-lg" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-                    Sign in to continue to your account
+                    {isForgotPassword ? 'Enter your email to receive a reset link' : 'Sign in to continue to your account'}
                   </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-6">
+                <form onSubmit={isForgotPassword ? handleForgotPassword : handleLogin} className="space-y-6">
                   {error && !isSignup && (
                     <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 rounded">
                       <p className="font-medium">{error}</p>
@@ -186,52 +210,57 @@ const Auth = () => {
                     autoComplete="email"
                   />
 
-                  <div className="relative">
-                    <Input
-                      label="Password"
-                      type={showLoginPassword ? 'text' : 'password'}
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-3 top-9 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                    >
-                      {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        id="remember-me"
-                        name="remember-me"
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-offset-0"
-                        style={{ accentColor: 'var(--theme-primary)' }}
+                  {!isForgotPassword && (
+                    <div className="relative">
+                      <Input
+                        label="Password"
+                        type={showLoginPassword ? 'text' : 'password'}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
                       />
-                      <label htmlFor="remember-me" className="ml-2 block text-sm" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
-                        Remember me
-                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-3 top-9 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      >
+                        {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="text-sm font-medium transition-colors"
-                      style={{ color: 'var(--theme-primary)' }}
-                      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
+                  )}
+
+                  {!isForgotPassword && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <input
+                          id="remember-me"
+                          name="remember-me"
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-offset-0"
+                          style={{ accentColor: 'var(--theme-primary)' }}
+                        />
+                        <label htmlFor="remember-me" className="ml-2 block text-sm" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                          Remember me
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(true)}
+                        className="text-sm font-medium transition-colors"
+                        style={{ color: 'var(--theme-primary)' }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
 
                   <button
                     type="submit"
-                    disabled={loading && !isSignup}
+                    disabled={(loading && !isSignup) || isForgotPasswordLoading}
                     className="w-full px-4 py-2 rounded-lg font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ 
                       backgroundColor: 'var(--theme-primary)',
@@ -247,7 +276,7 @@ const Auth = () => {
                       }
                     }}
                   >
-                    {loading && !isSignup ? (
+                    {(loading && !isSignup) || isForgotPasswordLoading ? (
                       <>
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 inline" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -256,9 +285,22 @@ const Auth = () => {
                         Loading...
                       </>
                     ) : (
-                      'Sign In'
+                      isForgotPassword ? 'Send Reset Link' : 'Sign In'
                     )}
                   </button>
+
+                  {isForgotPassword && (
+                    <div className="text-center mt-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(false)}
+                        className="text-sm font-medium transition-colors hover:underline"
+                        style={{ color: 'var(--theme-primary)' }}
+                      >
+                        Back to Login
+                      </button>
+                    </div>
+                  )}
                 </form>
               </div>
             )}

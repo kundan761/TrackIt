@@ -9,6 +9,8 @@ import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Select from '../components/ui/Select';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+import toast from 'react-hot-toast';
 import { Plus, Search, Grid, List, MoreVertical, Trash2, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -19,6 +21,7 @@ const Projects = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState<{isOpen: boolean, projectId: string | null}>({isOpen: false, projectId: null});
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -34,25 +37,40 @@ const Projects = () => {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    await dispatch(createProject({
-      ...formData,
-      startDate: formData.startDate ? new Date(formData.startDate) : undefined,
-      endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-    }));
-    setIsCreateModalOpen(false);
-    setFormData({
-      name: '',
-      description: '',
-      status: 'active',
-      startDate: '',
-      endDate: '',
-      color: '#3b82f6',
-    });
+    try {
+      await dispatch(createProject({
+        ...formData,
+        startDate: formData.startDate ? new Date(formData.startDate) : undefined,
+        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+      })).unwrap();
+      toast.success('Project created successfully');
+      setIsCreateModalOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        status: 'active',
+        startDate: '',
+        endDate: '',
+        color: '#3b82f6',
+      });
+    } catch (err: any) {
+      toast.error(err || 'Failed to create project');
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      await dispatch(deleteProject(id));
+  const handleDelete = (id: string) => {
+    setDeleteModalState({ isOpen: true, projectId: id });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteModalState.projectId) {
+      try {
+        await dispatch(deleteProject(deleteModalState.projectId)).unwrap();
+        toast.success('Project deleted successfully');
+        setDeleteModalState({ isOpen: false, projectId: null });
+      } catch (err: any) {
+        toast.error(err || 'Failed to delete project');
+      }
     }
   };
 
@@ -88,18 +106,19 @@ const Projects = () => {
               className="pl-10"
             />
           </div>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Status' },
-              { value: 'active', label: 'Active' },
-              { value: 'completed', label: 'Completed' },
-              { value: 'paused', label: 'Paused' },
-              { value: 'archived', label: 'Archived' },
-            ]}
-            className="w-full sm:w-48"
-          />
+          <div className="w-full sm:w-48">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'active', label: 'Active' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'paused', label: 'Paused' },
+                { value: 'archived', label: 'Archived' },
+              ]}
+            />
+          </div>
           <div className="flex items-center space-x-2 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-700 self-start sm:self-auto">
             <button
               onClick={() => setViewMode('grid')}
@@ -280,6 +299,13 @@ const Projects = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDeleteModal
+        isOpen={deleteModalState.isOpen}
+        onClose={() => setDeleteModalState({ isOpen: false, projectId: null })}
+        onConfirm={handleDeleteConfirm}
+        itemName="this project"
+      />
     </div>
   );
 };

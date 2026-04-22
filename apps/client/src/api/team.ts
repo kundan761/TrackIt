@@ -13,6 +13,11 @@ export interface TeamInvitation {
   token: string;
   expiresAt: string;
   role: 'admin' | 'manager' | 'member' | 'viewer';
+  projectId?: {
+    _id: string;
+    name: string;
+    color: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +25,7 @@ export interface TeamInvitation {
 export interface InviteTeamMemberData {
   email: string;
   role?: 'admin' | 'manager' | 'member' | 'viewer';
+  projectId?: string;
 }
 
 export const teamApi = {
