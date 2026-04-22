@@ -6,6 +6,7 @@ import { AuthRequest } from '../types/index.js';
 import crypto from 'crypto';
 import { upload, deleteImage, extractPublicId } from '../utils/cloudinary.js';
 import { config } from '../config/index.js';
+import { sendEmail, emailTemplates } from '../utils/emailService.js';
 
 export const register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const { name, email, password } = req.body;
@@ -320,15 +321,27 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response, n
   user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   await user.save({ validateBeforeSave: false });
+  
+  try {
+    const frontendUrl = config.get('FRONTEND_URL', 'http://localhost:5173');
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+    
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      html: emailTemplates.forgotPassword(resetUrl),
+    });
 
-  // TODO: Send email with reset token
-  // const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
-
-  res.status(200).json({
-    success: true,
-    message: 'Password reset email sent',
-    resetToken,
-  });
+    res.status(200).json({
+      success: true,
+      message: 'Password reset email sent',
+    });
+  } catch (err) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+    return next(new AppError('Email could not be sent', 500));
+  }
 });
 
 export const resetPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

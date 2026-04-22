@@ -145,5 +145,56 @@ export const emailTemplates = {
       </html>
     `;
   },
+
+  forgotPassword: (resetUrl: string) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Reset Your Password</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #4a154b 0%, #350d36 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px;">TrackIt</h1>
+          </div>
+          
+          <div style="background: #ffffff; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #4a154b; margin-top: 0;">Reset Your Password</h2>
+            
+            <p style="font-size: 16px; color: #555;">
+              You are receiving this email because you (or someone else) have requested the reset of the password for your account.
+            </p>
+            
+            <p style="font-size: 16px; color: #555;">
+              Please click on the button below to complete the process:
+            </p>
+            
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="${resetUrl}" style="display: inline-block; background: #4a154b; color: #ffffff; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                Reset Password
+              </a>
+            </div>
+            
+            <p style="font-size: 14px; color: #888; margin-top: 30px;">
+              Or copy and paste this link into your browser:
+            </p>
+            <p style="font-size: 12px; color: #aaa; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 5px;">
+              ${resetUrl}
+            </p>
+            
+            <p style="font-size: 14px; color: #888; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+              If you did not request this, please ignore this email and your password will remain unchanged.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; color: #888; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} TrackIt. All rights reserved.</p>
+          </div>
+        </body>
+      </html>
+    `;
+  },
 };
 
