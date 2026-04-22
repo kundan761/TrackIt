@@ -34,29 +34,32 @@ A comprehensive project management application built with MERN stack.
 
 ## Environment Variables
 
-Create a `env.yaml` file in the root directory:
+Create a `.env` file in the root directory based on `.env.example`:
 
-```
-server:
-  port: 5500
-  node_env: development
-  mongodb_uri: mongodb://localhost:27017/project-management
-  jwt_secret: your-super-secret-jwt-key-change-this-in-production
-  jwt_expire: 7d
-  jwt_refresh_secret: your-super-secret-refresh-token-key-change-this-in-production
-  jwt_refresh_expire: 30d
-  frontend_url: http://localhost:3000
-  email_service: gmail
-  email_user: your-email@gmail.com
-  email_password: your-app-password-here
-  email_from_name: TrackIt
-  cloudinary_cloud_name: your-cloud-name
-  cloudinary_api_key: your-api-key
-  cloudinary_api_secret: your-api-secret
+```env
+# Server Configuration
+PORT=5500
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/project-management
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRE=7d
+JWT_REFRESH_SECRET=your-refresh-token-key
+JWT_REFRESH_EXPIRE=30d
+FRONTEND_URL=http://localhost:3000
 
-client:
-  vite_api_url: http://localhost:5500/api
+# Email Configuration
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_FROM_NAME=TrackIt
 
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# Client Configuration (Vite)
+VITE_API_URL=http://localhost:5500/api
 ```
 
 ## Email Setup
@@ -67,7 +70,7 @@ client:
 2. Enable 2-Step Verification
 3. Go to Security > 2-Step Verification > App Passwords
 4. Generate an App Password for "Mail"
-5. Use this App Password as `EMAIL_PASSWORD` in your `env.yaml` file
+5. Use this App Password as `EMAIL_PASSWORD` in your `.env` file
 
 ## Installation
 
