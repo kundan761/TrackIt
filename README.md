@@ -13,6 +13,25 @@ A comprehensive project management application built with MERN stack.
 - Dark mode support with multiple themes
 - Responsive design
 
+## Screenshots
+
+<div align="center">
+  <h3>Dashboard</h3>
+  <img src="assets/dashboard.png" alt="Dashboard" width="800" />
+  
+  <h3>Task Management</h3>
+  <img src="assets/task-page.png" alt="Task Management" width="800" />
+  
+  <h3>Project Information</h3>
+  <img src="assets/project-info.png" alt="Project Info" width="800" />
+  
+  <h3>Team Collaboration</h3>
+  <img src="assets/team-page.png" alt="Team Page" width="800" />
+  
+  <h3>Reports & Analytics</h3>
+  <img src="assets/report-page.png" alt="Reports" width="800" />
+</div>
+
 ## Tech Stack
 
 ### Frontend

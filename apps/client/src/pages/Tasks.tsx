@@ -109,6 +109,10 @@ const Tasks = () => {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!taskForm.projectId) {
+      toast.error('Please select a project');
+      return;
+    }
     if (taskForm.assignees.length === 0) {
       toast.error('Please select an assignee.');
       return;
@@ -136,6 +140,10 @@ const Tasks = () => {
 
   const handleUpdateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!taskForm.projectId) {
+      toast.error('Please select a project');
+      return;
+    }
     if (taskForm.assignees.length === 0) {
       toast.error('Please select an assignee.');
       return;
@@ -227,7 +235,6 @@ const Tasks = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
@@ -242,7 +249,6 @@ const Tasks = () => {
         </Button>
       </div>
 
-      {/* Filters */}
       <Card>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           <div className="flex-1 relative">
