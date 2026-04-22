@@ -101,7 +101,7 @@ export const getMe = asyncHandler(async (req: AuthRequest, res: Response, next: 
 });
 
 export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { name, email, preferences } = req.body;
+  const { name, email } = req.body;
   const userId = req.user!._id;
 
   try {
@@ -124,38 +124,13 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     if (name !== undefined && name !== null && name.trim() !== '') {
       user.name = name.trim();
     }
-    if (preferences) {
-      const currentPrefs = user.preferences ? JSON.parse(JSON.stringify(user.preferences)) : {};
-      const mergedPrefs = { ...currentPrefs, ...preferences };
-      
-      if (mergedPrefs.theme !== undefined) {
-        user.preferences.theme = mergedPrefs.theme;
-      }
-      if (mergedPrefs.language !== undefined) {
-        user.preferences.language = mergedPrefs.language;
-      }
-      if (mergedPrefs.timezone !== undefined) {
-        user.preferences.timezone = mergedPrefs.timezone;
-      }
-      if (mergedPrefs.dateFormat !== undefined) {
-        user.preferences.dateFormat = mergedPrefs.dateFormat;
-      }
-      if (mergedPrefs.notifications) {
-        if (!user.preferences.notifications) {
-          user.preferences.notifications = {};
-        }
-        Object.assign(user.preferences.notifications, mergedPrefs.notifications);
-      }
-      
-      user.markModified('preferences');
-    }
 
-    const validRoles = ['admin', 'project_manager', 'team_member', 'viewer'];
+    const validRoles = ['admin', 'manager', 'member', 'viewer'];
     if (!validRoles.includes(originalRole)) {
       if (config.get('server.node_env', 'development') === 'development') {
-        console.warn(`Invalid role detected: ${originalRole}. Setting to default: team_member`);
+        console.warn(`Invalid role detected: ${originalRole}. Setting to default: member`);
       }
-      user.role = 'team_member';
+      user.role = 'member';
     } else {
       user.role = originalRole;
     }
@@ -206,9 +181,9 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response,
     }
 
     const originalRole = user.role;
-    const validRoles = ['admin', 'project_manager', 'team_member', 'viewer'];
+    const validRoles = ['admin', 'manager', 'member', 'viewer'];
     if (!validRoles.includes(originalRole)) {
-      user.role = 'team_member';
+      user.role = 'member';
     } else {
       user.role = originalRole;
     }
