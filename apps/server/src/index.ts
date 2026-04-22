@@ -35,7 +35,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-app.get('/api/health', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ success: true, message: 'Server is running' });
 });
 app.use(errorHandler);
