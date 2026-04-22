@@ -42,7 +42,7 @@ export const getReportsData = asyncHandler(async (req: AuthRequest, res: Respons
   const projectProgressData = await Promise.all(
     projects.map(async (project) => {
       const projectTasks = tasks.filter(
-        (t) => (typeof t.projectId === 'object' ? t.projectId._id.toString() : t.projectId?.toString()) === project._id.toString()
+        (t) => String(t.projectId) === String(project._id)
       );
       const completedTasks = projectTasks.filter((t) => t.status === 'done').length;
       const totalTasks = projectTasks.length;
