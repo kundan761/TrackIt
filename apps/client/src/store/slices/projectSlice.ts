@@ -18,7 +18,7 @@ const initialState: ProjectState = {
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchAll',
-  async (params?: { status?: string; search?: string }, { rejectWithValue }) => {
+  async (params: { status?: string; search?: string }, { rejectWithValue }) => {
     try {
       const response = await projectsApi.getAll(params);
       return response.data || [];

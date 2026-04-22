@@ -56,7 +56,7 @@ const Tasks = () => {
   const [membersLoading, setMembersLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchProjects());
+    dispatch(fetchProjects({}));
     dispatch(fetchTasks({
       status: statusFilter !== 'all' ? statusFilter : undefined,
       projectId: projectFilter !== 'all' ? projectFilter : undefined,

@@ -5,8 +5,8 @@ import { fetchDashboardData } from '../store/slices/dashboardSlice';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { Calendar, CheckCircle, Clock, Users, AlertCircle, Plus, ArrowRight } from 'lucide-react';
-import { format, isToday, isPast } from 'date-fns';
+import { Calendar, CheckCircle, Users, AlertCircle, Plus, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
 
 const Dashboard = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -36,16 +36,7 @@ const Dashboard = () => {
   const projects = data?.projects || [];
   const urgentTasks = data?.urgentTasks || [];
   const upcomingEvents = data?.upcomingEvents || [];
-  const teamMembers = data?.teamMembers || [];
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   const getPriorityColor = (priority: string) => {
     const colors = {

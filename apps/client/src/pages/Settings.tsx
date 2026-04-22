@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { Eye, EyeOff, User, Lock, Bell, Palette, Upload, X } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Bell, Palette, Upload } from 'lucide-react';
 import { config } from '../config/index.js';
 
 const PreferencesTab = () => {

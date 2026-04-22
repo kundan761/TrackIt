@@ -26,9 +26,9 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    dispatch(fetchNotifications());
+    dispatch(fetchNotifications(false));
     const interval = setInterval(() => {
-      dispatch(fetchNotifications());
+      dispatch(fetchNotifications(false));
     }, 30000);
     return () => clearInterval(interval);
   }, [dispatch]);

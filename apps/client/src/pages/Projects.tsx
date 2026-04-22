@@ -11,7 +11,7 @@ import Textarea from '../components/ui/Textarea';
 import Select from '../components/ui/Select';
 import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
 import toast from 'react-hot-toast';
-import { Plus, Search, Grid, List, MoreVertical, Trash2, Edit } from 'lucide-react';
+import { Plus, Search, Grid, List, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Projects = () => {

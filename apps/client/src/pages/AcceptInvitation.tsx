@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { teamApi } from '../api/team';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
@@ -9,7 +9,6 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const AcceptInvitation = () => {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -20,7 +19,6 @@ const AcceptInvitation = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [invitationInfo, setInvitationInfo] = useState<any>(null);
   const [validating, setValidating] = useState(true);
 
   useEffect(() => {

@@ -18,7 +18,7 @@ const initialState: EventState = {
 
 export const fetchEvents = createAsyncThunk(
   'events/fetchAll',
-  async (params?: { startDate?: string; endDate?: string }, { rejectWithValue }) => {
+  async (params: { startDate?: string; endDate?: string }, { rejectWithValue }) => {
     try {
       const response = await eventsApi.getAll(params);
       return response.data || [];

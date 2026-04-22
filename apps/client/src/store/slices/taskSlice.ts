@@ -18,7 +18,7 @@ const initialState: TaskState = {
 
 export const fetchTasks = createAsyncThunk(
   'tasks/fetchAll',
-  async (params?: {
+  async (params: {
     projectId?: string;
     status?: string;
     assignee?: string;

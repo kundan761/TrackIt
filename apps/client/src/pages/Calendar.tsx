@@ -7,7 +7,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 const Calendar = () => {
   const dispatch = useAppDispatch();
@@ -136,7 +136,7 @@ const Calendar = () => {
 
             return (
               <div
-                key={day.toISOString()}
+                key={day.toISOString() || index}
                 className={`min-h-[100px] border-r border-b p-2 ${
                   !isCurrentMonth ? 'bg-gray-50 dark:bg-gray-900' : 'bg-white dark:bg-gray-800'
                 } ${isToday ? 'bg-blue-50' : ''}`}

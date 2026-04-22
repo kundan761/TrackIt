@@ -27,7 +27,7 @@ const Team = () => {
   const [memberSearch, setMemberSearch] = useState('');
 
   useEffect(() => {
-    dispatch(fetchProjects());
+    dispatch(fetchProjects({}));
     loadInvitations();
   }, [dispatch]);
 
@@ -124,7 +124,7 @@ const Team = () => {
       setRole('member');
       setInviteProjectId('');
       await loadInvitations();
-      await dispatch(fetchProjects());
+      await dispatch(fetchProjects({}));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to send invitation. Please try again.');
     } finally {

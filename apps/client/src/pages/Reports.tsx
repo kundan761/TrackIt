@@ -142,7 +142,7 @@ const Reports = () => {
                       dataKey="value"
                       stroke="none"
                     >
-                      {taskStatusData.map((entry, index) => (
+                      {taskStatusData.map((_, index) => (
                          <Cell 
                            key={`cell-${index}`} 
                            fill={COLORS[index % COLORS.length]} 
