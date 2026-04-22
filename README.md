@@ -32,6 +32,12 @@ A comprehensive project management application built with MERN stack.
   <img src="assets/report-page.png" alt="Reports" width="800" />
 </div>
 
+## Deployment
+
+- **Frontend**: [Link](https://track-it-kappa-fawn.vercel.app/)
+- **Backend**: [Link](https://trackit-xqw6.onrender.com)
+
+
 ## Tech Stack
 
 ### Frontend
@@ -122,29 +128,6 @@ Team invitations are sent via email. When a user is invited:
 2. Clicking the link takes them to the invitation acceptance page
 3. They create their account with name and password
 4. They are automatically logged in and added to the team
-
-## Deployment
-
-This project is configured for a hybrid deployment:
-- **Frontend**: Vercel
-- **Backend**: Render
-
-### Frontend (Vercel)
-1. Import your repository into Vercel.
-2. Use the following build settings:
-   - **Framework Preset**: `Other` (or `Vite`)
-   - **Root Directory**: `.` (Root folder)
-   - **Build Command**: `npm run build:client`
-   - **Output Directory**: `apps/client/dist`
-3. Add Environment Variables:
-   - `VITE_API_URL`: Your backend API URL (e.g., `https://your-app.onrender.com/api`)
-
-### Backend (Render)
-1. Create a new **Web Service** on Render.
-2. Use the following settings:
-   - **Build Command**: `npm install && npm run build:server`
-   - **Start Command**: `npm start`
-3. Add all environment variables from `.env.example` to the Render dashboard.
 
 ## License
 
