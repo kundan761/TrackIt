@@ -13,7 +13,7 @@ A comprehensive project management application built with MERN stack.
 - Dark mode support with multiple themes
 - Responsive design
 
-## Screenshots
+## Project Screenshots
 
 <div align="center">
   <h3>Dashboard</h3>
