@@ -8,32 +8,32 @@ interface EmailOptions {
 }
 
 const createTransporter = () => {
-  const emailService = config.get('server.email_service', 'gmail');
+  const emailService = config.get('EMAIL_SERVICE', 'gmail');
   
   if (emailService === 'gmail') {
     return nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: config.get('server.email_user'),
-        pass: config.get('server.email_password'),
+        user: config.get('EMAIL_USER'),
+        pass: config.get('EMAIL_PASSWORD'),
       },
     });
   }
 
   return nodemailer.createTransport({
-    host: config.get('server.smtp_host', 'smtp.gmail.com'),
-    port: parseInt(config.get('server.smtp_port', '587')),
-    secure: config.get('server.smtp_secure', 'false') === 'true',
+    host: config.get('SMTP_HOST', 'smtp.gmail.com'),
+    port: parseInt(config.get('SMTP_PORT', '587')),
+    secure: config.get('SMTP_SECURE', 'false') === 'true',
     auth: {
-      user: config.get('server.email_user'),
-      pass: config.get('server.email_password'),
+      user: config.get('EMAIL_USER'),
+      pass: config.get('EMAIL_PASSWORD'),
     },
   });
 };
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
-    if (!config.get('server.email_user') || !config.get('server.email_password')) {
+    if (!config.get('EMAIL_USER') || !config.get('EMAIL_PASSWORD')) {
       console.log('Email not configured. Email would be sent to:', options.to);
       console.log('Subject:', options.subject);
       console.log('HTML:', options.html);
@@ -43,7 +43,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: `"${config.get('server.email_from_name', 'TrackIt')}" <${config.get('server.email_user')}>`,
+      from: `"${config.get('EMAIL_FROM_NAME', 'TrackIt')}" <${config.get('EMAIL_USER')}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -136,7 +136,7 @@ export const emailTemplates = {
             </p>
             
             <div style="text-align: center; margin: 40px 0;">
-              <a href="${config.get('server.frontend_url', 'http://localhost:5173')}" style="display: inline-block; background: #4a154b; color: #ffffff; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+              <a href="${config.get('FRONTEND_URL', 'http://localhost:5173')}" style="display: inline-block; background: #4a154b; color: #ffffff; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
                 Go to Dashboard
               </a>
             </div>

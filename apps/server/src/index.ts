@@ -1,15 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { errorHandler } from './middleware/errorHandler.js';
 import { config } from './config/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
@@ -21,7 +14,7 @@ import teamRoutes from './routes/team.js';
 import notificationRoutes from './routes/notifications.js';
 
 const app = express();
-const PORT = config.get('server.port', 5000);
+const PORT = config.get('PORT');
 
 app.use(cors());
 app.use(express.json());
@@ -40,7 +33,7 @@ app.get('/', (req, res) => {
 });
 app.use(errorHandler);
 
-const MONGODB_URI = config.get('server.mongodb_uri');
+const MONGODB_URI = config.get('MONGODB_URI');
 
 mongoose
   .connect(MONGODB_URI)

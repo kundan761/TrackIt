@@ -1,10 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
 
-const JWT_SECRET = config.get('server.jwt_secret', 'your-secret-key-change-in-production');
-const JWT_EXPIRE = config.get('server.jwt_expire', '7d');
-const JWT_REFRESH_SECRET = config.get('server.jwt_refresh_secret', 'your-refresh-secret-key');
-const JWT_REFRESH_EXPIRE = config.get('server.jwt_refresh_expire', '30d');
+const JWT_SECRET = config.get('JWT_SECRET');
+const JWT_EXPIRE = config.get('JWT_EXPIRE');
+const JWT_REFRESH_SECRET = config.get('JWT_REFRESH_SECRET');
+const JWT_REFRESH_EXPIRE = config.get('JWT_REFRESH_EXPIRE');
 
 export const generateToken = (userId: string): string => {
   return jwt.sign({ userId }, JWT_SECRET, {

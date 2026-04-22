@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { config } from '../config/index.js';
 
-const API_URL = config.get('vite_api_url');
+const API_URL = config.get('VITE_API_URL');
 
 const apiClient = axios.create({
   baseURL: API_URL,

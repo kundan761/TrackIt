@@ -10,9 +10,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const cloudName = config.get('server.cloudinary_cloud_name');
-const apiKey = config.get('server.cloudinary_api_key');
-const apiSecret = config.get('server.cloudinary_api_secret');
+const cloudName = config.get('CLOUDINARY_CLOUD_NAME');
+const apiKey = config.get('CLOUDINARY_API_KEY');
+const apiSecret = config.get('CLOUDINARY_API_SECRET');
 
 if (!cloudName || !apiKey || !apiSecret) {
   console.warn('⚠️  Cloudinary configuration is missing. Avatar uploads will not work.');

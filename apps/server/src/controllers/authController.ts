@@ -127,7 +127,7 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
 
     const validRoles = ['admin', 'manager', 'member', 'viewer'];
     if (!validRoles.includes(originalRole)) {
-      if (config.get('server.node_env', 'development') === 'development') {
+      if (config.get('NODE_ENV') === 'development') {
         console.warn(`Invalid role detected: ${originalRole}. Setting to default: member`);
       }
       user.role = 'member';
@@ -188,9 +188,9 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response,
       user.role = originalRole;
     }
 
-    const cloudName = config.get('server.cloudinary_cloud_name');
-    const apiKey = config.get('server.cloudinary_api_key');
-    const apiSecret = config.get('server.cloudinary_api_secret');
+    const cloudName = config.get('CLOUDINARY_CLOUD_NAME');
+    const apiKey = config.get('CLOUDINARY_API_KEY');
+    const apiSecret = config.get('CLOUDINARY_API_SECRET');
     
     if (!cloudName || !apiKey || !apiSecret) {
       return next(new AppError('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your env.yaml.', 500));
@@ -213,14 +213,14 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response,
     }
     
     if (!avatarUrl) {
-      if (config.get('server.node_env', 'development') === 'development') {
+      if (config.get('NODE_ENV') === 'development') {
         console.error('Cloudinary upload failed - file object:', JSON.stringify(fileInfo, null, 2));
       }
       return next(new AppError('Failed to get image URL from Cloudinary. The file may not have been uploaded successfully. Please check your Cloudinary configuration and try again.', 500));
     }
     
     if (!avatarUrl.startsWith('http')) {
-      const cName = config.get('server.cloudinary_cloud_name');
+      const cName = config.get('CLOUDINARY_CLOUD_NAME');
       if (cName && avatarUrl.includes('project-management/avatars')) {
         avatarUrl = `https://res.cloudinary.com/${cName}/image/upload/${avatarUrl}`;
       } else {
@@ -239,7 +239,7 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response,
           await deleteImage(publicId);
         }
       } catch (deleteError) {
-        if (config.get('server.node_env', 'development') === 'development') {
+        if (config.get('NODE_ENV') === 'development') {
           console.warn('Failed to delete old avatar:', deleteError);
         }
       }
@@ -266,7 +266,7 @@ export const uploadAvatar = asyncHandler(async (req: AuthRequest, res: Response,
       },
     });
   } catch (error: any) {
-    if (config.get('server.node_env', 'development') === 'development') {
+    if (config.get('NODE_ENV') === 'development') {
       console.error('Avatar upload error:', error);
       console.error('Error stack:', error.stack);
     }

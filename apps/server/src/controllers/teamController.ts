@@ -62,7 +62,7 @@ export const inviteTeamMember = asyncHandler(async (req: AuthRequest, res: Respo
   });
 
   try {
-    const frontendUrl = config.get('server.frontend_url');
+    const frontendUrl = config.get('FRONTEND_URL');
     const inviteUrl = `${frontendUrl}/invite/${token}`;
     const inviter = await User.findById(invitedBy);
     const inviterName = inviter?.name || 'Team Admin';
@@ -90,7 +90,7 @@ export const inviteTeamMember = asyncHandler(async (req: AuthRequest, res: Respo
         projectId: invitation.projectId,
         projectName,
       },
-      token: config.get('server.node_env', 'development') === 'development' ? token : undefined,
+      token: config.get('NODE_ENV', 'development') === 'development' ? token : undefined,
     },
   });
 });
@@ -236,7 +236,7 @@ export const resendInvitation = asyncHandler(async (req: AuthRequest, res: Respo
   invitation.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   await invitation.save();
   try {
-    const frontendUrl = config.get('server.frontend_url');
+    const frontendUrl = config.get('FRONTEND_URL');
     const inviteUrl = `${frontendUrl}/invite/${token}`;
     const inviter = await User.findById(req.user!._id);
     const inviterName = inviter?.name || 'Team Admin';
@@ -260,7 +260,7 @@ export const resendInvitation = asyncHandler(async (req: AuthRequest, res: Respo
         status: invitation.status,
         expiresAt: invitation.expiresAt,
       },
-      token: config.get('server.node_env', 'development') === 'development' ? token : undefined,
+      token: config.get('NODE_ENV', 'development') === 'development' ? token : undefined,
     },
   });
 });

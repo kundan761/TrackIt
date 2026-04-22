@@ -451,8 +451,8 @@ const Settings = () => {
       if (user.avatar.startsWith('http')) {
         return user.avatar;
       }
-      return `${config.get('vite_api_url')?.replace('/api', '')}${user.avatar}`;
-    }
+      return `${config.get('VITE_API_URL')?.replace('/api', '')}${user.avatar}`;
+    } 
     return null;
   };
 
