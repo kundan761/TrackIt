@@ -12,6 +12,7 @@
     "build:server": "cd apps/server && tsc",
     "build": "npm run build:client && npm run build:server",
     "start": "node apps/server/dist/index.js",
+    "vite": "cd apps/client && vite",
     "lint": "cd apps/client && eslint .",
     "create-module": "bash module.sh"
   },
